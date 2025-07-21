@@ -58,7 +58,6 @@ To enable intelligent stage transitions, I implemented several LiveKit function 
 - User data and conversation context
 - Stage-specific transition rules
 
-This approach allows the LLM to make informed decisions about stage transitions by understanding the current stage requirements and available options, rather than relying on simple keyword matching.
 
 **Priority-Based Stage Evaluation**: Implemented a priority system for stage transitions where stages with higher priority values are evaluated first. This ensures that more specific or important transitions take precedence over general fallback options.
 
