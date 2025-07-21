@@ -1,0 +1,684 @@
+{
+  "global_settings": {
+    "llm_settings": {
+      "provider": "openai",
+      "model": "gpt-4o",
+      "temperature": 0.6
+    },
+    "stt_settings": {
+      "provider": "deepgram",
+      "model": "nova-2",
+      "language": "en"
+    },
+    "tts_settings": {
+      "provider": "cartesia",
+      "model": "sonic-english",
+      "voice": "confident_sales_professional"
+    }
+  },
+  "agent_config": {
+    "name": "Premier Realty Lead Qualification Agent",
+    "description": "Qualifies real estate leads and schedules appointments with agents",
+    "voice_config": {
+      "override_voice": false
+    },
+    "base_instructions": "You are a professional real estate assistant for Premier Realty. Be friendly, knowledgeable, and helpful. Your goal is to understand the caller's real estate needs and connect them with the right agent."
+  },
+  "flow": {
+    "start_node": "warm_greeting",
+    "nodes": {
+      "warm_greeting": {
+        "id": "warm_greeting",
+        "prompt": "Hello! Thank you for calling Premier Realty. I'm Sarah, your real estate assistant. I'm here to help you with all your real estate needs. May I get your name and how you heard about us?",
+        "node_type": "prompt",
+        "transitions": [
+          {
+            "to_node": "determine_intent",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 90,
+            "description": "Move to understand their real estate intent"
+          }
+        ],
+        "context_updates": {
+          "conversation_start": true,
+          "caller_greeted": true
+        }
+      },
+      "determine_intent": {
+        "id": "determine_intent",
+        "prompt": "I'd love to learn more about your real estate goals. Are you looking to buy a home, sell a property, or perhaps both?",
+        "node_type": "decision",
+        "transitions": [
+          {
+            "to_node": "buying_qualification",
+            "condition": {
+              "type": "keyword",
+              "operator": "contains",
+              "value": ["buy", "buying", "purchase", "home", "house"]
+            },
+            "priority": 90,
+            "description": "Qualify buying requirements"
+          },
+          {
+            "to_node": "selling_qualification",
+            "condition": {
+              "type": "keyword",
+              "operator": "contains",
+              "value": ["sell", "selling", "list", "market"]
+            },
+            "priority": 90,
+            "description": "Qualify selling requirements"
+          },
+          {
+            "to_node": "both_buy_sell",
+            "condition": {
+              "type": "keyword",
+              "operator": "contains",
+              "value": ["both", "buy and sell", "sell and buy", "moving"]
+            },
+            "priority": 88,
+            "description": "Handle both buying and selling needs"
+          },
+          {
+            "to_node": "rental_assistance",
+            "condition": {
+              "type": "keyword",
+              "operator": "contains",
+              "value": ["rent", "rental", "lease", "tenant"]
+            },
+            "priority": 85,
+            "description": "Handle rental inquiries"
+          },
+          {
+            "to_node": "investment_consultation",
+            "condition": {
+              "type": "keyword",
+              "operator": "contains",
+              "value": ["invest", "investment", "portfolio", "cash flow"]
+            },
+            "priority": 85,
+            "description": "Handle investment inquiries"
+          },
+          {
+            "to_node": "general_information",
+            "condition": {
+              "type": "always",
+              "operator": "exists"
+            },
+            "priority": 70,
+            "description": "Provide general information"
+          }
+        ],
+        "context_updates": {
+          "intent_gathering": true
+        }
+      },
+      "buying_qualification": {
+        "id": "buying_qualification",
+        "prompt": "Excellent! I'd love to help you find your perfect home. Let me ask you a few questions to better understand what you're looking for. What areas or neighborhoods are you considering?",
+        "node_type": "prompt",
+        "transitions": [
+          {
+            "to_node": "budget_discussion",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 85,
+            "description": "Discuss budget and financing"
+          }
+        ],
+        "context_updates": {
+          "lead_type": "buyer",
+          "qualification_started": true
+        }
+      },
+      "budget_discussion": {
+        "id": "budget_discussion",
+        "prompt": "That's a great area! Now, to help me match you with the right properties and agent, what's your budget range? Have you been pre-approved for a mortgage yet?",
+        "node_type": "prompt",
+        "transitions": [
+          {
+            "to_node": "timeline_discussion",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 80,
+            "description": "Discuss timeline"
+          }
+        ],
+        "context_updates": {
+          "budget_discussed": true
+        }
+      },
+      "timeline_discussion": {
+        "id": "timeline_discussion",
+        "prompt": "Perfect! What's your timeline for purchasing? Are you looking to buy within the next 30 days, 60 days, or are you just starting to explore?",
+        "node_type": "prompt",
+        "transitions": [
+          {
+            "to_node": "schedule_buyer_consultation",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 75,
+            "description": "Schedule consultation with buyer's agent"
+          }
+        ],
+        "context_updates": {
+          "timeline_discussed": true
+        }
+      },
+      "selling_qualification": {
+        "id": "selling_qualification",
+        "prompt": "Great! I can help you with selling your property. Can you tell me the address of the property you're looking to sell, and what's motivating you to sell at this time?",
+        "node_type": "prompt",
+        "transitions": [
+          {
+            "to_node": "property_details",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 90,
+            "description": "Gather property details"
+          }
+        ],
+        "context_updates": {
+          "lead_type": "seller",
+          "qualification_started": true
+        }
+      },
+      "property_details": {
+        "id": "property_details",
+        "prompt": "Thank you for that information. Can you tell me a bit about your property - how many bedrooms and bathrooms, approximate square footage, and have you made any recent updates or renovations?",
+        "node_type": "prompt",
+        "transitions": [
+          {
+            "to_node": "selling_timeline",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 80,
+            "description": "Discuss selling timeline"
+          }
+        ],
+        "context_updates": {
+          "property_details_collected": true
+        }
+      },
+      "selling_timeline": {
+        "id": "selling_timeline",
+        "prompt": "Excellent! What's your ideal timeline for selling? Do you have any specific deadlines we should be aware of, such as a job relocation or school year considerations?",
+        "node_type": "prompt",
+        "transitions": [
+          {
+            "to_node": "schedule_listing_consultation",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 85,
+            "description": "Schedule with listing agent"
+          }
+        ],
+        "context_updates": {
+          "timeline_discussed": true
+        }
+      },
+      "both_buy_sell": {
+        "id": "both_buy_sell",
+        "prompt": "I understand you need to both sell your current home and buy a new one. This requires careful coordination, and we have agents who specialize in this exact situation. Do you need to sell first to qualify for your new purchase, or do you have flexibility in the timing?",
+        "node_type": "prompt",
+        "transitions": [
+          {
+            "to_node": "coordination_planning",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 90,
+            "description": "Plan coordination strategy"
+          }
+        ],
+        "context_updates": {
+          "lead_type": "buy_and_sell",
+          "coordination_needed": true
+        }
+      },
+      "coordination_planning": {
+        "id": "coordination_planning",
+        "prompt": "That helps me understand your situation. Our agents can walk you through several strategies like contingent offers, bridge financing, or lease-back arrangements. Let me connect you with one of our specialists who handles these coordinated transactions every day.",
+        "node_type": "prompt",
+        "transitions": [
+          {
+            "to_node": "schedule_coordination_consultation",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 95,
+            "description": "Schedule specialized consultation"
+          }
+        ],
+        "context_updates": {
+          "coordination_strategy_discussed": true
+        }
+      },
+      "rental_assistance": {
+        "id": "rental_assistance",
+        "prompt": "I can help you with rental properties. Are you looking to rent a property for yourself, or are you a property owner looking for rental management services?",
+        "node_type": "decision",
+        "transitions": [
+          {
+            "to_node": "tenant_assistance",
+            "condition": {
+              "type": "keyword",
+              "operator": "contains",
+              "value": ["looking for", "need to rent", "tenant", "renting"]
+            },
+            "priority": 85,
+            "description": "Help find rental property"
+          },
+          {
+            "to_node": "landlord_services",
+            "condition": {
+              "type": "keyword",
+              "operator": "contains",
+              "value": ["own", "property management", "landlord", "manage"]
+            },
+            "priority": 85,
+            "description": "Discuss property management"
+          },
+          {
+            "to_node": "schedule_rental_consultation",
+            "condition": {
+              "type": "always",
+              "operator": "exists"
+            },
+            "priority": 70,
+            "description": "Schedule with rental specialist"
+          }
+        ],
+        "context_updates": {
+          "lead_type": "rental"
+        }
+      },
+      "tenant_assistance": {
+        "id": "tenant_assistance",
+        "prompt": "Perfect! I can connect you with our rental specialists. What type of property are you looking for, and what's your preferred area and budget range?",
+        "node_type": "prompt",
+        "transitions": [
+          {
+            "to_node": "schedule_rental_consultation",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 80,
+            "description": "Schedule rental consultation"
+          }
+        ],
+        "context_updates": {
+          "rental_type": "tenant"
+        }
+      },
+      "landlord_services": {
+        "id": "landlord_services",
+        "prompt": "Great! Our property management team can help you maximize your rental income and handle all the day-to-day management. How many properties do you own, and what specific services are you looking for?",
+        "node_type": "prompt",
+        "transitions": [
+          {
+            "to_node": "schedule_management_consultation",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 80,
+            "description": "Schedule management consultation"
+          }
+        ],
+        "context_updates": {
+          "rental_type": "landlord"
+        }
+      },
+      "investment_consultation": {
+        "id": "investment_consultation",
+        "prompt": "Real estate investment can be a great wealth-building strategy. Are you new to real estate investing, or do you already have some experience? What type of returns are you hoping to achieve?",
+        "node_type": "prompt",
+        "transitions": [
+          {
+            "to_node": "investment_strategy",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 85,
+            "description": "Discuss investment strategies"
+          }
+        ],
+        "context_updates": {
+          "lead_type": "investor"
+        }
+      },
+      "investment_strategy": {
+        "id": "investment_strategy",
+        "prompt": "That's helpful to understand your goals. Our investment specialists can show you properties that match your criteria and help you analyze potential returns. They work with both new and experienced investors.",
+        "node_type": "prompt",
+        "transitions": [
+          {
+            "to_node": "schedule_investment_consultation",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 80,
+            "description": "Schedule investment consultation"
+          }
+        ],
+        "context_updates": {
+          "investment_strategy_discussed": true
+        }
+      },
+      "general_information": {
+        "id": "general_information",
+        "prompt": "I'm happy to provide you with information about real estate. What specific questions do you have? I can tell you about market conditions, the buying or selling process, or anything else you'd like to know.",
+        "node_type": "prompt",
+        "transitions": [
+          {
+            "to_node": "convert_to_lead",
+            "condition": {
+              "type": "keyword",
+              "operator": "contains",
+              "value": ["interested", "thinking about", "considering", "might"]
+            },
+            "priority": 85,
+            "description": "Convert to qualified lead"
+          },
+          {
+            "to_node": "provide_resources",
+            "condition": {
+              "type": "keyword",
+              "operator": "contains",
+              "value": ["information", "resources", "learn more"]
+            },
+            "priority": 75,
+            "description": "Provide additional resources"
+          },
+          {
+            "to_node": "call_completion",
+            "condition": {
+              "type": "always",
+              "operator": "exists"
+            },
+            "priority": 60,
+            "description": "Complete informational call"
+          }
+        ],
+        "context_updates": {
+          "lead_type": "information_seeker"
+        }
+      },
+      "convert_to_lead": {
+        "id": "convert_to_lead",
+        "prompt": "It sounds like you might be ready to take the next step. I'd love to connect you with one of our agents who can provide more personalized guidance. There's no obligation - they can just answer your questions and help you understand your options.",
+        "node_type": "prompt",
+        "transitions": [
+          {
+            "to_node": "determine_intent",
+            "condition": {
+              "type": "keyword",
+              "operator": "contains",
+              "value": ["yes", "sure", "okay", "sounds good"]
+            },
+            "priority": 90,
+            "description": "Return to intent qualification"
+          },
+          {
+            "to_node": "future_follow_up",
+            "condition": {
+              "type": "keyword",
+              "operator": "contains",
+              "value": ["later", "future", "not ready", "thinking"]
+            },
+            "priority": 80,
+            "description": "Schedule future follow-up"
+          },
+          {
+            "to_node": "call_completion",
+            "condition": {
+              "type": "always",
+              "operator": "exists"
+            },
+            "priority": 60,
+            "description": "Complete call"
+          }
+        ],
+        "context_updates": {
+          "conversion_attempted": true
+        }
+      },
+      "schedule_buyer_consultation": {
+        "id": "schedule_buyer_consultation",
+        "prompt": "Perfect! I have all the information I need to match you with one of our excellent buyer's agents. I have availability tomorrow afternoon or Thursday morning. Which works better for you?",
+        "node_type": "action",
+        "transitions": [
+          {
+            "to_node": "consultation_confirmation",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 95,
+            "description": "Confirm appointment details"
+          }
+        ],
+        "context_updates": {
+          "consultation_type": "buyer",
+          "scheduling_initiated": true
+        }
+      },
+      "schedule_listing_consultation": {
+        "id": "schedule_listing_consultation",
+        "prompt": "Excellent! I'll schedule you with one of our top listing agents who specializes in your area. They'll come to your home to do a walkthrough and provide a comprehensive market analysis. Are you available this week for a consultation?",
+        "node_type": "action",
+        "transitions": [
+          {
+            "to_node": "consultation_confirmation",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 95,
+            "description": "Confirm appointment details"
+          }
+        ],
+        "context_updates": {
+          "consultation_type": "seller",
+          "scheduling_initiated": true
+        }
+      },
+      "schedule_coordination_consultation": {
+        "id": "schedule_coordination_consultation",
+        "prompt": "I'll connect you with one of our agents who specializes in buy/sell coordination. They handle these complex transactions regularly and can walk you through all your options. When would be a good time for them to call you?",
+        "node_type": "action",
+        "transitions": [
+          {
+            "to_node": "consultation_confirmation",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 95,
+            "description": "Confirm appointment details"
+          }
+        ],
+        "context_updates": {
+          "consultation_type": "coordination",
+          "scheduling_initiated": true
+        }
+      },
+      "schedule_rental_consultation": {
+        "id": "schedule_rental_consultation",
+        "prompt": "I'll connect you with our rental specialist who can help you find exactly what you're looking for. They have access to all the latest listings and can schedule showings right away. When would be convenient for them to call you?",
+        "node_type": "action",
+        "transitions": [
+          {
+            "to_node": "consultation_confirmation",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 95,
+            "description": "Confirm appointment details"
+          }
+        ],
+        "context_updates": {
+          "consultation_type": "rental",
+          "scheduling_initiated": true
+        }
+      },
+      "schedule_management_consultation": {
+        "id": "schedule_management_consultation",
+        "prompt": "Our property management team would love to discuss how they can help you maximize your rental income while minimizing your time investment. When would be a good time for them to call and discuss your properties?",
+        "node_type": "action",
+        "transitions": [
+          {
+            "to_node": "consultation_confirmation",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 95,
+            "description": "Confirm appointment details"
+          }
+        ],
+        "context_updates": {
+          "consultation_type": "management",
+          "scheduling_initiated": true
+        }
+      },
+      "schedule_investment_consultation": {
+        "id": "schedule_investment_consultation",
+        "prompt": "Our investment specialist can show you current opportunities and help you analyze potential returns. They work with investors at all levels. Would you prefer to meet at our office or have them call you first to discuss your goals?",
+        "node_type": "action",
+        "transitions": [
+          {
+            "to_node": "consultation_confirmation",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 95,
+            "description": "Confirm appointment details"
+          }
+        ],
+        "context_updates": {
+          "consultation_type": "investment",
+          "scheduling_initiated": true
+        }
+      },
+      "consultation_confirmation": {
+        "id": "consultation_confirmation",
+        "prompt": "Perfect! Let me confirm those details with you. I have you scheduled for [time/date] with [agent name]. They'll call you at this number about 15 minutes before to confirm. You'll also receive a confirmation email with their direct contact information.",
+        "node_type": "prompt",
+        "transitions": [
+          {
+            "to_node": "final_questions",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 80,
+            "description": "Address any final questions"
+          }
+        ],
+        "context_updates": {
+          "appointment_confirmed": true
+        }
+      },
+      "provide_resources": {
+        "id": "provide_resources",
+        "prompt": "I'd be happy to send you some helpful resources. We have market reports, buying/selling guides, and neighborhood information. What's the best email address to send these to?",
+        "node_type": "prompt",
+        "transitions": [
+          {
+            "to_node": "future_follow_up",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 80,
+            "description": "Plan future contact"
+          }
+        ],
+        "context_updates": {
+          "resources_provided": true
+        }
+      },
+      "future_follow_up": {
+        "id": "future_follow_up",
+        "prompt": "I understand you're not ready to move forward right now. Would you like me to follow up with you in a few months, or would you prefer to call us when you're ready?",
+        "node_type": "prompt",
+        "transitions": [
+          {
+            "to_node": "call_completion",
+            "condition": {
+              "type": "user_input",
+              "operator": "exists"
+            },
+            "priority": 95,
+            "description": "Complete call with follow-up plan"
+          }
+        ],
+        "context_updates": {
+          "future_follow_up_scheduled": true
+        }
+      },
+      "final_questions": {
+        "id": "final_questions",
+        "prompt": "Do you have any other questions about the process or anything else I can help clarify before your consultation?",
+        "node_type": "prompt",
+        "transitions": [
+          {
+            "to_node": "call_completion",
+            "condition": {
+              "type": "always",
+              "operator": "exists"
+            },
+            "priority": 90,
+            "description": "Complete the call"
+          }
+        ],
+        "context_updates": {
+          "final_questions_addressed": true
+        }
+      },
+      "call_completion": {
+        "id": "call_completion",
+        "prompt": "Thank you so much for calling Premier Realty today. I'm excited to help you with your real estate journey. If you think of any other questions before your consultation, feel free to call back anytime. Have a wonderful day!",
+        "node_type": "end",
+        "transitions": [
+          {
+            "to_node": "END",
+            "condition": {
+              "type": "always",
+              "operator": "exists"
+            },
+            "priority": 100,
+            "description": "End conversation"
+          }
+        ],
+        "context_updates": {
+          "call_completed": true
+        }
+      }
+    }
+  }
+}

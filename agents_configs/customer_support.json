@@ -1,0 +1,489 @@
+{
+    "global_settings": {
+      "llm_settings": {
+        "provider": "openai",
+        "model": "gpt-4o",
+        "temperature": 0.3
+      },
+      "stt_settings": {
+        "provider": "deepgram",
+        "model": "nova-2",
+        "language": "en"
+      },
+      "tts_settings": {
+        "provider": "elevenlabs",
+        "model": "eleven_multilingual_v2",
+        "voice": "21m00Tcm4TlvDq8ikWAM"
+      }
+    },
+    "agent_config": {
+      "name": "TechFlow Customer Support Agent",
+      "description": "Handles customer support inquiries for TechFlow software products",
+      "base_instructions": "You are a knowledgeable customer support representative for TechFlow. Be helpful, patient, and solution-oriented. Always verify customer information before accessing accounts."
+    },
+    "flow": {
+      "start_stage": "initial_greeting",
+      "stages": {
+        "initial_greeting": {
+          "id": "initial_greeting",
+          "name": "Initial Greeting",
+          "description": "Welcome customer and understand their support need",
+          "greeting": "Hello! Thank you for contacting TechFlow support. I'm here to help you today. May I please get your name and briefly describe what I can assist you with?",
+          "prompt": "Greet the customer professionally and collect their name. Ask them to describe their issue or what they need help with. Be patient if they need time to explain. Determine if they need: 1) Technical support, 2) Account/billing help, 3) Product information, or 4) Bug report/feedback.",
+          "completion_criteria": "Customer has provided their name and explained their general support need",
+          "next_stages": [
+            {
+              "stage_id": "technical_support",
+              "condition": "Customer has technical issues, software problems, or needs help using the product",
+              "priority": 85,
+              "description": "Handle technical support requests"
+            },
+            {
+              "stage_id": "account_support",
+              "condition": "Customer has account, subscription, billing, or login issues",
+              "priority": 85,
+              "description": "Handle account-related issues"
+            },
+            {
+              "stage_id": "product_inquiry",
+              "condition": "Customer wants information about features, pricing, or product capabilities",
+              "priority": 80,
+              "description": "Provide product information"
+            },
+            {
+              "stage_id": "bug_report",
+              "condition": "Customer wants to report a bug, provide feedback, or submit a feature request",
+              "priority": 75,
+              "description": "Handle bug reports and feedback"
+            },
+            {
+              "stage_id": "clarification_needed",
+              "condition": "Customer's request is unclear or falls outside main categories",
+              "priority": 40,
+              "description": "Ask for clarification"
+            }
+          ],
+          "context_updates": {
+            "conversation_start": true,
+            "customer_greeted": true
+          }
+        },
+        "technical_support": {
+          "id": "technical_support",
+          "name": "Technical Support",
+          "description": "Diagnose and resolve technical issues",
+          "greeting": "I understand you're experiencing a technical issue. Let me help you troubleshoot this step by step.",
+          "prompt": "Gather detailed information about the technical problem: What product/feature they're using, what they were trying to do, what happened vs. what they expected, error messages, when it started, their system/browser. Use systematic troubleshooting approach. Start with simple solutions before complex ones.",
+          "completion_criteria": "Issue is resolved, escalated to technical team, or customer needs different type of support",
+          "next_stages": [
+            {
+              "stage_id": "basic_troubleshooting",
+              "condition": "Issue seems like it can be resolved with standard troubleshooting steps",
+              "priority": 90,
+              "description": "Guide through basic troubleshooting"
+            },
+            {
+              "stage_id": "advanced_troubleshooting",
+              "condition": "Issue requires more complex troubleshooting or account access",
+              "priority": 80,
+              "description": "Handle advanced technical issues"
+            },
+            {
+              "stage_id": "escalate_technical",
+              "condition": "Issue requires developer attention or is beyond standard support scope",
+              "priority": 70,
+              "description": "Escalate to technical team"
+            },
+            {
+              "stage_id": "account_support",
+              "condition": "Technical issue is actually account-related",
+              "priority": 75,
+              "description": "Route to account support"
+            }
+          ],
+          "context_updates": {
+            "support_type": "technical",
+            "troubleshooting_started": true
+          }
+        },
+        "basic_troubleshooting": {
+          "id": "basic_troubleshooting",
+          "name": "Basic Troubleshooting",
+          "description": "Guide customer through standard troubleshooting steps",
+          "greeting": "Let's start with some basic troubleshooting steps that resolve most common issues.",
+          "prompt": "Walk the customer through appropriate basic troubleshooting: clearing cache/cookies, trying different browser, checking internet connection, restarting application, verifying account permissions. Give clear, step-by-step instructions. Wait for them to complete each step before proceeding.",
+          "completion_criteria": "Basic troubleshooting steps completed - either issue is resolved or advanced help is needed",
+          "next_stages": [
+            {
+              "stage_id": "issue_resolved",
+              "condition": "Customer confirms the issue is now working",
+              "priority": 95,
+              "description": "Issue successfully resolved"
+            },
+            {
+              "stage_id": "advanced_troubleshooting",
+              "condition": "Basic steps didn't work and more advanced troubleshooting is needed",
+              "priority": 80,
+              "description": "Move to advanced troubleshooting"
+            },
+            {
+              "stage_id": "escalate_technical",
+              "condition": "Customer is frustrated or issue seems more complex than initially thought",
+              "priority": 70,
+              "description": "Escalate to technical specialist"
+            }
+          ],
+          "context_updates": {
+            "basic_troubleshooting_completed": true
+          }
+        },
+        "advanced_troubleshooting": {
+          "id": "advanced_troubleshooting",
+          "name": "Advanced Troubleshooting",
+          "description": "Handle complex technical issues requiring account verification",
+          "greeting": "I'll need to look into your account to help with this issue. Let me verify your information first.",
+          "prompt": "Verify customer identity with account email and security questions. Then investigate account-specific settings, integrations, permissions, usage limits. Check for known issues affecting their specific configuration. Provide detailed solutions or workarounds.",
+          "completion_criteria": "Advanced troubleshooting completed with resolution, workaround provided, or escalation needed",
+          "next_stages": [
+            {
+              "stage_id": "issue_resolved",
+              "condition": "Issue has been resolved through advanced troubleshooting",
+              "priority": 90,
+              "description": "Issue successfully resolved"
+            },
+            {
+              "stage_id": "provide_workaround",
+              "condition": "Temporary workaround available while permanent fix is developed",
+              "priority": 80,
+              "description": "Provide workaround solution"
+            },
+            {
+              "stage_id": "escalate_technical",
+              "condition": "Issue requires developer investigation or system-level changes",
+              "priority": 75,
+              "description": "Escalate to technical team"
+            }
+          ],
+          "context_updates": {
+            "account_verified": true,
+            "advanced_troubleshooting_completed": true
+          }
+        },
+        "account_support": {
+          "id": "account_support",
+          "name": "Account Support",
+          "description": "Handle account, billing, and subscription issues",
+          "greeting": "I'm here to help with your account. For security, I'll need to verify your identity first.",
+          "prompt": "Handle account-related requests: billing questions, subscription changes, login issues, password resets, account upgrades/downgrades. Always verify customer identity before accessing account information. Be clear about what actions you can take vs. what requires escalation.",
+          "completion_criteria": "Account issue resolved or escalated to appropriate team",
+          "next_stages": [
+            {
+              "stage_id": "verify_account",
+              "condition": "Need to verify customer identity before proceeding",
+              "priority": 95,
+              "description": "Verify customer account"
+            },
+            {
+              "stage_id": "billing_inquiry",
+              "condition": "Customer has billing, payment, or subscription questions",
+              "priority": 85,
+              "description": "Handle billing matters"
+            },
+            {
+              "stage_id": "login_assistance",
+              "condition": "Customer cannot access their account or needs password reset",
+              "priority": 85,
+              "description": "Help with login issues"
+            },
+            {
+              "stage_id": "account_changes",
+              "condition": "Customer wants to modify their account or subscription",
+              "priority": 80,
+              "description": "Process account modifications"
+            }
+          ],
+          "context_updates": {
+            "support_type": "account"
+          }
+        },
+        "verify_account": {
+          "id": "verify_account",
+          "name": "Account Verification",
+          "description": "Verify customer identity for account access",
+          "greeting": "For your security, I need to verify your account. Can you please provide the email address associated with your TechFlow account?",
+          "prompt": "Verify customer identity using: account email, last 4 digits of payment method, account creation date, or recent activity. Ask security questions as needed. Only proceed with account actions after successful verification.",
+          "completion_criteria": "Customer identity successfully verified or verification failed",
+          "next_stages": [
+            {
+              "stage_id": "billing_inquiry",
+              "condition": "Verification successful and customer has billing questions",
+              "priority": 85,
+              "description": "Proceed to billing assistance"
+            },
+            {
+              "stage_id": "login_assistance",
+              "condition": "Verification successful and customer needs login help",
+              "priority": 85,
+              "description": "Proceed to login assistance"
+            },
+            {
+              "stage_id": "account_changes",
+              "condition": "Verification successful and customer wants account modifications",
+              "priority": 80,
+              "description": "Proceed to account changes"
+            },
+            {
+              "stage_id": "verification_failed",
+              "condition": "Unable to verify customer identity",
+              "priority": 70,
+              "description": "Handle verification failure"
+            }
+          ],
+          "context_updates": {
+            "verification_attempted": true
+          }
+        },
+        "billing_inquiry": {
+          "id": "billing_inquiry",
+          "name": "Billing Inquiry",
+          "description": "Handle billing and subscription questions",
+          "greeting": "I can help you with your billing questions. What specifically would you like to know about your account?",
+          "prompt": "Address billing concerns: explain charges, process refunds, update payment methods, clarify subscription terms, handle failed payments. Be transparent about billing policies and escalate to billing team for complex issues.",
+          "completion_criteria": "Billing question answered or escalated to billing specialist",
+          "next_stages": [
+            {
+              "stage_id": "issue_resolved",
+              "condition": "Billing question successfully answered",
+              "priority": 85,
+              "description": "Billing issue resolved"
+            },
+            {
+              "stage_id": "escalate_billing",
+              "condition": "Complex billing issue requiring specialist attention",
+              "priority": 75,
+              "description": "Escalate to billing team"
+            },
+            {
+              "stage_id": "follow_up_needed",
+              "condition": "Issue requires follow-up or processing time",
+              "priority": 70,
+              "description": "Schedule follow-up"
+            }
+          ],
+          "context_updates": {
+            "billing_inquiry_handled": true
+          }
+        },
+        "product_inquiry": {
+          "id": "product_inquiry",
+          "name": "Product Inquiry",
+          "description": "Provide product information and guidance",
+          "greeting": "I'd be happy to help you learn more about TechFlow. What specific information are you looking for?",
+          "prompt": "Answer questions about: product features, pricing plans, integration capabilities, use cases, technical requirements, trial options. Provide accurate, helpful information and guide customers to appropriate resources or next steps.",
+          "completion_criteria": "Customer's product questions answered and next steps provided",
+          "next_stages": [
+            {
+              "stage_id": "feature_explanation",
+              "condition": "Customer wants detailed explanation of specific features",
+              "priority": 80,
+              "description": "Explain product features"
+            },
+            {
+              "stage_id": "pricing_discussion",
+              "condition": "Customer has questions about pricing or plans",
+              "priority": 80,
+              "description": "Discuss pricing options"
+            },
+            {
+              "stage_id": "demo_scheduling",
+              "condition": "Customer interested in seeing product demonstration",
+              "priority": 75,
+              "description": "Schedule product demo"
+            },
+            {
+              "stage_id": "completion",
+              "condition": "Customer's questions answered satisfactorily",
+              "priority": 60,
+              "description": "Complete inquiry"
+            }
+          ],
+          "context_updates": {
+            "product_inquiry_type": "general"
+          }
+        },
+        "bug_report": {
+          "id": "bug_report",
+          "name": "Bug Report",
+          "description": "Collect bug reports and feedback",
+          "greeting": "Thank you for taking the time to report this issue. Your feedback helps us improve TechFlow.",
+          "prompt": "Collect detailed bug report: steps to reproduce, expected vs actual behavior, environment details, screenshots/error messages. Document feedback clearly for development team. Provide ticket number and expected timeline for resolution.",
+          "completion_criteria": "Bug report collected and documented with ticket created",
+          "next_stages": [
+            {
+              "stage_id": "collect_bug_details",
+              "condition": "Need to gather detailed information about the bug",
+              "priority": 90,
+              "description": "Collect comprehensive bug details"
+            },
+            {
+              "stage_id": "known_issue_check",
+              "condition": "Check if this is a known issue with existing workaround",
+              "priority": 85,
+              "description": "Check for known issues"
+            }
+          ],
+          "context_updates": {
+            "bug_report_started": true
+          }
+        },
+        "collect_bug_details": {
+          "id": "collect_bug_details",
+          "name": "Collect Bug Details",
+          "description": "Gather comprehensive information about reported bug",
+          "greeting": "Let me collect some detailed information to help our development team investigate this issue.",
+          "prompt": "Systematically collect: exact steps to reproduce, browser/device info, account type, when issue first occurred, frequency, impact on workflow, any error messages or screenshots. Create detailed bug report for development team.",
+          "completion_criteria": "Complete bug report collected and ticket created",
+          "next_stages": [
+            {
+              "stage_id": "bug_ticket_created",
+              "condition": "All necessary bug information collected",
+              "priority": 95,
+              "description": "Create bug ticket"
+            }
+          ],
+          "context_updates": {
+            "bug_details_collected": true
+          }
+        },
+        "bug_ticket_created": {
+          "id": "bug_ticket_created",
+          "name": "Bug Ticket Created",
+          "description": "Confirm bug ticket creation and next steps",
+          "greeting": "I've created a bug report for our development team. Here's your ticket information.",
+          "prompt": "Provide customer with ticket number, expected timeline for investigation, how they'll be notified of updates. Thank them for reporting the issue and ask if they need any immediate workarounds.",
+          "completion_criteria": "Customer informed about bug ticket and next steps",
+          "next_stages": [
+            {
+              "stage_id": "completion",
+              "condition": "Customer satisfied with bug report process",
+              "priority": 90,
+              "description": "Complete interaction"
+            }
+          ],
+          "context_updates": {
+            "bug_ticket_number": "generated",
+            "customer_notified": true
+          }
+        },
+        "issue_resolved": {
+          "id": "issue_resolved",
+          "name": "Issue Resolved",
+          "description": "Confirm issue resolution and gather feedback",
+          "greeting": "Great! It sounds like we've resolved your issue. Let me just confirm everything is working properly for you.",
+          "prompt": "Confirm the issue is fully resolved. Ask if there's anything else they need help with. Thank them for their patience and invite them to contact support if they have future questions.",
+          "completion_criteria": "Customer confirms issue is resolved and no additional help needed",
+          "next_stages": [
+            {
+              "stage_id": "completion",
+              "condition": "Customer confirms everything is working and no additional help needed",
+              "priority": 95,
+              "description": "Complete successful resolution"
+            },
+            {
+              "stage_id": "additional_support",
+              "condition": "Customer has additional questions or issues",
+              "priority": 80,
+              "description": "Address additional concerns"
+            }
+          ],
+          "context_updates": {
+            "issue_resolved": true,
+            "resolution_confirmed": true
+          }
+        },
+        "escalate_technical": {
+          "id": "escalate_technical",
+          "name": "Escalate to Technical Team",
+          "description": "Transfer to technical specialist",
+          "greeting": "I'm going to connect you with one of our technical specialists who can provide more advanced assistance.",
+          "prompt": "Explain that you're transferring them to technical team. Summarize the issue, troubleshooting steps already taken, and any relevant account information. Ensure smooth handoff.",
+          "completion_criteria": "Customer transferred to technical specialist with complete context",
+          "next_stages": [
+            {
+              "stage_id": "END",
+              "condition": "Transfer to technical team completed",
+              "priority": 100,
+              "description": "End after transfer"
+            }
+          ],
+          "context_updates": {
+            "escalated_to": "technical_team",
+            "transfer_reason": "advanced_technical_issue"
+          }
+        },
+        "escalate_billing": {
+          "id": "escalate_billing",
+          "name": "Escalate to Billing Team",
+          "description": "Transfer to billing specialist",
+          "greeting": "I'm transferring you to our billing specialist who can handle this more complex billing matter.",
+          "prompt": "Transfer customer to billing team with summary of their issue and any account verification already completed. Ensure they understand the transfer reason.",
+          "completion_criteria": "Customer transferred to billing specialist",
+          "next_stages": [
+            {
+              "stage_id": "END",
+              "condition": "Transfer to billing team completed",
+              "priority": 100,
+              "description": "End after transfer"
+            }
+          ],
+          "context_updates": {
+            "escalated_to": "billing_team"
+          }
+        },
+        "completion": {
+          "id": "completion",
+          "name": "Completion",
+          "description": "Complete the support interaction",
+          "greeting": "Is there anything else I can help you with today?",
+          "prompt": "Check if customer needs additional assistance. If yes, route to appropriate stage. If no, thank them for contacting support and provide information about how to reach support in the future.",
+          "completion_criteria": "Customer confirms no additional help needed",
+          "next_stages": [
+            {
+              "stage_id": "initial_greeting",
+              "condition": "Customer has additional questions or new issues",
+              "priority": 80,
+              "description": "Handle additional requests"
+            },
+            {
+              "stage_id": "goodbye",
+              "condition": "Customer satisfied and ready to end conversation",
+              "priority": 90,
+              "description": "End with goodbye"
+            }
+          ],
+          "context_updates": {
+            "completion_check": true
+          }
+        },
+        "goodbye": {
+          "id": "goodbye",
+          "name": "Goodbye",
+          "description": "End the support conversation",
+          "greeting": "Thank you for contacting TechFlow support. Have a great day!",
+          "prompt": "Provide professional closing message. Thank customer for their business and remind them they can always contact support if they need future assistance.",
+          "completion_criteria": "Goodbye message delivered",
+          "next_stages": [
+            {
+              "stage_id": "END",
+              "condition": "Conversation complete",
+              "priority": 100,
+              "description": "End conversation"
+            }
+          ],
+          "context_updates": {
+            "conversation_ended": true
+          }
+        }
+      }
+    }
+  }

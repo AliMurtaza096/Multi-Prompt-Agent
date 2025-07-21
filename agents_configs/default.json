@@ -1,0 +1,270 @@
+{
+  "global_settings": {
+    "llm_settings": {
+      "provider": "openai",
+      "model": "gpt-4o-mini",
+      "temperature": 0.7
+    },
+    "stt_settings": {
+      "provider": "deepgram",
+      "model": "nova-2",
+      "language": "en"
+    },
+    "tts_settings": {
+      "provider": "openai",
+      "model": "gpt-4o-mini-tts",
+      "voice": "ash"
+    }
+  },
+  "agent_config": {
+    "name": "Medical Office Assistant",
+    "description": "Helps patients with medical office inquiries",
+    "base_instructions": "You are a helpful medical office assistant. Always be professional, empathetic, and follow HIPAA guidelines."
+  },
+  "flow": {
+    "start_stage": "reason_for_call",
+    "stages": {
+      "reason_for_call": {
+        "id": "reason_for_call",
+        "name": "Reason for Call",
+        "description": "Greet patient and understand their reason for calling",
+        "greeting": "Hello! Welcome to Downtown Medical Center. I'm your AI assistant. How can I help you today?",
+        "prompt": "Greet the patient warmly and determine their reason for calling. Ask follow-up questions to understand if they need: 1) Appointments (new, reschedule, questions), 2) Billing help (insurance, payments, bills), 3) General information (hours, location, services). Stay in this stage until you clearly understand their primary need.",
+        "completion_criteria": "Patient has clearly explained their reason for calling and you understand what type of help they need",
+        "next_stages": [
+          {
+            "stage_id": "appointment_assistance",
+            "condition": "Patient needs help with appointments (scheduling, rescheduling, or appointment questions)",
+            "priority": 80,
+            "description": "Move to appointment assistance"
+          },
+          {
+            "stage_id": "billing_assistance", 
+            "condition": "Patient has billing, insurance, or payment questions",
+            "priority": 80,
+            "description": "Move to billing assistance"
+          },
+          {
+            "stage_id": "general_assistance",
+            "condition": "Patient needs general information or other help",
+            "priority": 60,
+            "description": "Move to general assistance"
+          }
+        ],
+        "context_updates": {
+          "conversation_start": true,
+          "patient_greeted": true
+        }
+      },
+      "appointment_assistance": {
+        "id": "appointment_assistance",
+        "name": "Appointment Assistance",
+        "description": "Help patient with appointment-related requests",
+        "greeting": "I'd be happy to help you with your appointment needs. Let me collect some information to assist you better.",
+        "prompt": "Help the patient with appointment needs. Ask specific questions based on their request: For new appointments: type of visit, preferred doctor/department, reason for visit, preferred dates/times. For rescheduling: current appointment details, new preferred times. For questions: what they need to know about their upcoming appointment. Collect all necessary information before proceeding.",
+        "completion_criteria": "You have collected all necessary appointment information and can either provide the help they need or transfer them to scheduling",
+        "next_stages": [
+          {
+            "stage_id": "schedule_appointment",
+            "condition": "Patient wants to schedule a new appointment and you have all required details",
+            "priority": 90,
+            "description": "Move to schedule new appointment"
+          },
+          {
+            "stage_id": "transfer_scheduling",
+            "condition": "Patient needs scheduling help that requires human assistance",
+            "priority": 70,
+            "description": "Transfer to scheduling team"
+          },
+          {
+            "stage_id": "completion",
+            "condition": "Patient's appointment question has been answered",
+            "priority": 60,
+            "description": "Move to completion"
+          }
+        ],
+        "context_updates": {
+          "department": "appointments",
+          "assistance_type": "appointment"
+        }
+      },
+      "billing_assistance": {
+        "id": "billing_assistance", 
+        "name": "Billing Assistance",
+        "description": "Help patient with billing and insurance questions",
+        "greeting": "I'm here to help with your billing questions. Let me understand what specific billing assistance you need.",
+        "prompt": "Help the patient with billing, insurance, or payment questions. Ask specific questions: For bill questions: which bill, what charges they're questioning. For insurance: what coverage questions they have. For payments: what payment help they need. Collect relevant account information and details about their specific concern.",
+        "completion_criteria": "You understand their billing concern and have collected necessary information to help or transfer appropriately",
+        "next_stages": [
+          {
+            "stage_id": "transfer_billing",
+            "condition": "Patient needs billing help that requires access to their account or specialist assistance",
+            "priority": 80,
+            "description": "Transfer to billing department"
+          },
+          {
+            "stage_id": "completion",
+            "condition": "Patient's billing question has been answered with general information",
+            "priority": 60,
+            "description": "Move to completion"
+          }
+        ],
+        "context_updates": {
+          "department": "billing",
+          "assistance_type": "billing"
+        }
+      },
+      "general_assistance": {
+        "id": "general_assistance",
+        "name": "General Assistance", 
+        "description": "Help with general inquiries and information",
+        "greeting": "I'd be happy to help you with general information about our medical center.",
+        "prompt": "Provide general information about the medical center: office hours, location, directions, services offered, contact information. Answer their specific questions with accurate information. If they need something beyond general information, guide them to the appropriate department.",
+        "completion_criteria": "Patient's general questions have been answered or they've been directed to the right resource",
+        "next_stages": [
+          {
+            "stage_id": "appointment_assistance",
+            "condition": "Patient decides they need appointment help after getting general information",
+            "priority": 70,
+            "description": "Move to appointment assistance"
+          },
+          {
+            "stage_id": "transfer_human",
+            "condition": "Patient requests to speak with a human representative",
+            "priority": 80,
+            "description": "Transfer to human representative"
+          },
+          {
+            "stage_id": "completion",
+            "condition": "Patient's questions have been answered",
+            "priority": 60,
+            "description": "Move to completion"
+          }
+        ],
+        "context_updates": {
+          "assistance_type": "general"
+        }
+      },
+      "schedule_appointment": {
+        "id": "schedule_appointment",
+        "name": "Schedule Appointment",
+        "description": "Process new appointment scheduling",
+        "greeting": "Perfect! I have all the information needed for your appointment. Let me process this for you.",
+        "prompt": "Process the appointment scheduling request. Confirm all details with the patient, provide them with next steps, and let them know how they'll receive confirmation. If you can't complete the scheduling, transfer to the scheduling team with all collected information.",
+        "completion_criteria": "Appointment has been scheduled or patient has been transferred to scheduling with all their information",
+        "next_stages": [
+          {
+            "stage_id": "completion",
+            "condition": "Appointment successfully scheduled or transfer completed",
+            "priority": 100,
+            "description": "Complete the interaction"
+          }
+        ],
+        "context_updates": {
+          "appointment_scheduled": true
+        }
+      },
+      "transfer_scheduling": {
+        "id": "transfer_scheduling",
+        "name": "Transfer to Scheduling",
+        "description": "Transfer patient to scheduling team",
+        "greeting": "I'll transfer you to our scheduling team who can access our appointment system and help you directly.",
+        "prompt": "Transfer the patient to the scheduling team. Summarize what they need and any information already collected. Ensure smooth handoff.",
+        "completion_criteria": "Patient has been successfully transferred to scheduling team",
+        "next_stages": [
+          {
+            "stage_id": "END",
+            "condition": "Transfer completed",
+            "priority": 100,
+            "description": "End conversation after transfer"
+          }
+        ],
+        "context_updates": {
+          "transferred_to": "scheduling"
+        }
+      },
+      "transfer_billing": {
+        "id": "transfer_billing",
+        "name": "Transfer to Billing",
+        "description": "Transfer patient to billing department",
+        "greeting": "I'll transfer you to our billing department who can access your account and provide detailed assistance.",
+        "prompt": "Transfer the patient to the billing department. Summarize their billing question and any information collected. Ensure smooth handoff.",
+        "completion_criteria": "Patient has been successfully transferred to billing department",
+        "next_stages": [
+          {
+            "stage_id": "END",
+            "condition": "Transfer completed", 
+            "priority": 100,
+            "description": "End conversation after transfer"
+          }
+        ],
+        "context_updates": {
+          "transferred_to": "billing"
+        }
+      },
+      "transfer_human": {
+        "id": "transfer_human",
+        "name": "Transfer to Human",
+        "description": "Transfer to human representative",
+        "prompt": "I'll transfer you to one of our human representatives who can assist you further.",
+        "instructions": "Transfer the patient to a human representative. Provide context about what they've discussed and what help they need.",
+        "completion_criteria": "Patient has been transferred to human representative",
+        "next_stages": [
+          {
+            "stage_id": "END",
+            "condition": "Transfer completed",
+            "priority": 100,
+            "description": "End conversation after transfer"
+          }
+        ],
+        "context_updates": {
+          "transferred_to": "human"
+        }
+      },
+      "completion": {
+        "id": "completion",
+        "name": "Completion",
+        "description": "Complete the conversation",
+        "prompt": "Is there anything else I can help you with today?",
+        "instructions": "Check if the patient needs any additional help. If yes, route them to the appropriate stage. If no, provide a friendly closing.",
+        "completion_criteria": "Patient confirms they don't need additional help",
+        "next_stages": [
+          {
+            "stage_id": "reason_for_call",
+            "condition": "Patient has additional questions or needs",
+            "priority": 80,
+            "description": "Start over for new request"
+          },
+          {
+            "stage_id": "goodbye",
+            "condition": "Patient is satisfied and ready to end call",
+            "priority": 90,
+            "description": "End with goodbye"
+          }
+        ],
+        "context_updates": {
+          "completion_check": true
+        }
+      },
+      "goodbye": {
+        "id": "goodbye",
+        "name": "Goodbye",
+        "description": "End the conversation",
+        "prompt": "Thank you for contacting Downtown Medical Center. Have a great day and take care!",
+        "instructions": "Provide a warm, professional goodbye message and end the conversation.",
+        "completion_criteria": "Goodbye message delivered",
+        "next_stages": [
+          {
+            "stage_id": "END",
+            "condition": "Conversation complete",
+            "priority": 100,
+            "description": "End conversation"
+          }
+        ],
+        "context_updates": {
+          "conversation_ended": true
+        }
+      }
+    }
+  }
+}

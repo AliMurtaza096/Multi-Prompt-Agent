@@ -1,0 +1,237 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Node-Based Agent Flow Configuration",
+    "type": "object",
+    "properties": {
+      "global_settings": {
+        "$ref": "#/definitions/GlobalSettings"
+      },
+      "agent_config": {
+        "$ref": "#/definitions/AgentConfig" 
+      },
+      "flow": {
+        "$ref": "#/definitions/Flow"
+      }
+    },
+    "required": ["global_settings", "agent_config", "flow"],
+    "definitions": {
+      "GlobalSettings": {
+        "type": "object",
+        "description": "Basic global settings applied to base agent",
+        "properties": {
+          "llm_settings": {
+            "$ref": "#/definitions/LLMSettings"
+          },
+          "stt_settings": {
+            "$ref": "#/definitions/STTSettings"
+          },
+          "tts_settings": {
+            "$ref": "#/definitions/TTSSettings"
+          }
+        },
+        "required": ["llm_settings", "stt_settings", "tts_settings"]
+      },
+      "LLMSettings": {
+        "type": "object",
+        "description": "Large Language Model configuration",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": ["openai", "anthropic", "azure","groq"],
+            "default": "openai"
+          },
+          "model": {
+            "type": "string",
+            "description": "Model identifier",
+            "default": "gpt-4o-mini"
+          },
+          "temperature": {
+            "type": "number",
+            "description": "Response creativity/randomness",
+            "minimum": 0,
+            "maximum": 2,
+            "default": 0.7
+          }
+        },
+        "required": ["provider", "model", "temperature"]
+      },
+      "STTSettings": {
+        "type": "object",
+        "description": "Speech-to-Text configuration",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": ["deepgram", "openai", "azure"],
+            "default": "deepgram"
+          },
+          "model": {
+            "type": "string",
+            "description": "STT model to use",
+            "default": "nova-2"
+          },
+          "language": {
+            "type": "string",
+            "description": "Language code",
+            "default": "en"
+          }
+        },
+        "required": ["provider", "model", "language"]
+      },
+      "TTSSettings": {
+        "type": "object",
+        "description": "Text-to-Speech configuration",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": ["cartesia", "openai", "elevenlabs"],
+            "default": "elevenlabs"
+          },
+          "model": {
+            "type": "string",
+            "description": "TTS model to use",
+            "default": "sonic-english"
+          },
+          "voice": {
+            "type": "string",
+            "description": "Voice identifier",
+            "default": "professional_female"
+          }
+        },
+        "required": ["provider", "model", "voice"]
+      },
+      "AgentConfig": {
+        "type": "object", 
+        "description": "Agent-specific configuration",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Agent name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Agent purpose"
+          },
+          "voice_config": {
+            "$ref": "#/definitions/VoiceConfig"
+          },
+          "base_instructions": {
+            "type": "string",
+            "description": "Base system instructions for the agent"
+          }
+        },
+        "required": ["name", "base_instructions"]
+      },
+      "VoiceConfig": {
+        "type": "object",
+        "description": "Optional voice configuration overrides",
+        "properties": {
+          "override_voice": {
+            "type": "boolean",
+            "description": "Override global voice settings",
+            "default": false
+          },
+          "voice_overrides": {
+            "type": "object",
+            "properties": {
+              "voice": {
+                "type": "string",
+                "description": "Override voice identifier"
+              }
+            }
+          }
+        }
+      },
+      "Flow": {
+        "type": "object",
+        "description": "Stage-based conversation flow",
+        "properties": {
+          "start_stage": {
+            "type": "string",
+            "description": "ID of the starting stage"
+          },
+          "stages": {
+            "type": "object",
+            "description": "All available stages in the flow",
+            "patternProperties": {
+              "^[a-zA-Z0-9_-]+$": {
+                "$ref": "#/definitions/Stage"
+              }
+            }
+          }
+        },
+        "required": ["start_stage", "stages"]
+      },
+      "Stage": {
+        "type": "object",
+        "description": "Individual conversation stage",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique stage identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable stage name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of what this stage does"
+          },
+          "greeting": {
+            "type": "string",
+            "description": "Initial greeting message for this stage"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "The prompt/instructions for this stage"
+          },
+          "instructions": {
+            "type": "string",
+            "description": "Additional instructions for this stage"
+          },
+          "completion_criteria": {
+            "type": "string",
+            "description": "Criteria that must be met to complete this stage"
+          },
+          "next_stages": {
+            "type": "array",
+            "description": "Possible next stages from this stage",
+            "items": {
+              "$ref": "#/definitions/NextStage"
+            }
+          },
+          "context_updates": {
+            "type": "object",
+            "description": "Context variables to set when entering this stage",
+            "additionalProperties": true
+          }
+        },
+        "required": ["id", "prompt"]
+      },
+      "NextStage": {
+        "type": "object",
+        "description": "Next stage transition rule",
+        "properties": {
+          "stage_id": {
+            "type": "string",
+            "description": "Target stage ID or 'END' to terminate"
+          },
+          "condition": {
+            "type": "string",
+            "description": "Condition that must be met to transition to this stage"
+          },
+          "priority": {
+            "type": "integer",
+            "description": "Transition priority (higher = checked first)",
+            "minimum": 0,
+            "default": 50
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of this transition"
+          }
+        },
+        "required": ["stage_id", "condition"]
+      }
+    }
+  }
